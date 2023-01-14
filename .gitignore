@@ -1,6 +1,0 @@
-__pycache__
-
-# Remove emacs tilde files
-.gitignore~
-pridefetch~
-README.md~
