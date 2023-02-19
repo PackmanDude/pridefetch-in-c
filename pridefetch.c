@@ -32,15 +32,16 @@ int main(int argc, char *argv[])
 
 /* Mostly a technical function.
 	It fills hash table at start of the program. Later may be
-	implemented in completely different way or removed completely.
+	implemented in completely different way or replaced completely.
 */
 void _fill_htab(void)
 {
-	const char *flags_names[FLAGS_COUNT];
-	flags_names[0] = "GLORY_TO_UKRAINE";
-	flags_names[1] = "UPA";
-	//
-	const Flag flags_colors[FLAGS_COUNT][MAX_ROWS] =
+	const char *flags_names[] =
+	{
+		"GLORY_TO_UKRAINE",
+		"UPA"
+	};
+	const uint_least8_t flags_colors[FLAGS_COUNT][MAX_ROWS] =
 	{
 		{33, 33, 226, 226},
 		{88, 88, 0, 0}
@@ -50,13 +51,20 @@ void _fill_htab(void)
 
 	for (int i = 0; i < FLAGS_COUNT; ++i)
 	{
-		pEntry->key = flags_names[i];
+		pEntry->key = strdup(flags_names[i]);
 		pEntry->data = malloc(sizeof(*flags_colors[0]) * MAX_ROWS);
 		memcpy(pEntry->data, flags_colors[i],
 			sizeof(*flags_colors[0]) * MAX_ROWS);
 
-		hsearch(*pEntry, ENTER);
+		if (hsearch(*pEntry, ENTER) == NULL)
+		{
+			fprintf(stderr, "entry failed.\n");
+//			free(pEntry->key);
+			free(pEntry->data);
+			exit(EXIT_FAILURE);
+		}
 	}
+//	free(pEntry->key);
 	free(pEntry->data);
 }
 
@@ -82,6 +90,7 @@ str color256(int color, enum DrawAt bg_fg)
 	return NULL;
 }
 
+// (not)My lil bloat func
 void draw_info(const char *flag_name)
 {
 	assert(flag_name != NULL);
@@ -99,12 +108,6 @@ void draw_info(const char *flag_name)
 	ENTRY entry, *pEntry = &entry;
 	pEntry->key = strdup(pFlag_name_all_caps);
 
-	/* TODO:
-	 ~~	Fill somehow hash table somewhere, where grass is nice
-	 ~~	and flowers shine at sunrise. Tip: global scope isn't
-	 ~~	that place.
-	   - I will, father.
-	*/
 	if (hsearch(*pEntry, FIND) == NULL)
 	{
 		fprintf(stderr, "'%s' was not found.\n", flag_name);
