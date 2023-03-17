@@ -4,10 +4,14 @@
 #include <search.h>
 #include <stdint.h>
 
+#define chair char
 #define MAX_ROWS 4
-#define FLAGS_COUNT 2
 
-typedef uint_least8_t Flag[MAX_ROWS];
+typedef struct
+{
+	const char *name;
+	const uint_least8_t rows[MAX_ROWS];
+} Flag;
 
 enum DrawAt {bg, fg};
 
@@ -17,13 +21,27 @@ void draw_info(const char *flag_name);
 
 int main(int argc, char *argv[])
 {
+	chadstr help_msg = str("usage: ", argv[0],
+		" flag_name (case-insensitive)");
+
 	if (argc < 2)
 	{
-		printf("usage: %s <flag_name> (case-insensitive)\n", argv[0]);
+		printf("%s\n", str(*help_msg));
 		return EXIT_FAILURE;
 	}
 
-	hcreate(32);
+	// str() is an object string. so we can compare them like that
+	if (str(argv[1]) == str("-h") || str(argv[1]) == str("--help"))
+	{
+		printf("%s\n", str(*help_msg));
+		return EXIT_SUCCESS;
+	}
+
+	if (hcreate(32) == 0)
+	{
+		perror(argv[0]);
+		return EXIT_FAILURE;
+	}
 	_fill_htab();
 	draw_info(argv[1]);
 	hdestroy();
@@ -31,41 +49,25 @@ int main(int argc, char *argv[])
 }
 
 /* Mostly a technical function.
-	It fills hash table at start of the program. Later may be
-	implemented in completely different way or replaced completely.
+	It fills hash table at the start of a program. Later may be
+	implemented in a completely different way or replaced completely.
 */
 void _fill_htab(void)
 {
-	const char *flags_names[] =
-	{
-		"GLORY_TO_UKRAINE",
-		"UPA"
-	};
-	const uint_least8_t flags_colors[FLAGS_COUNT][MAX_ROWS] =
-	{
-		{33, 33, 226, 226},
-		{88, 88, 0, 0}
-	};
+	Flag flag1 = { "GLORY_TO_UKRAINE", {33, 33, 226, 226} };
+	Flag flag2 = { "UPA", {88, 88, 0, 0} };
 
-	ENTRY entry, *pEntry = &entry;
+	// Define them at compile time
+	ENTRY entry = { strdup(flag1.name), (void*)&flag1.rows };
+	// Note: .rows was a const pointer, we got rid of that
+	hsearch(entry, ENTER);
+	entry.key = strdup(flag2.name);
+	entry.data = (void*)&flag2.rows;
+	hsearch(entry, ENTER);
 
-	for (int i = 0; i < FLAGS_COUNT; ++i)
-	{
-		pEntry->key = strdup(flags_names[i]);
-		pEntry->data = malloc(sizeof(*flags_colors[0]) * MAX_ROWS);
-		memcpy(pEntry->data, flags_colors[i],
-			sizeof(*flags_colors[0]) * MAX_ROWS);
-
-		if (hsearch(*pEntry, ENTER) == NULL)
-		{
-			fprintf(stderr, "entry failed.\n");
-//			free(pEntry->key);
-			free(pEntry->data);
-			exit(EXIT_FAILURE);
-		}
-	}
-//	free(pEntry->key);
-	free(pEntry->data);
+	// meh
+	free(entry.key);
+//	free(entry.data);
 }
 
 str color256(int color, enum DrawAt bg_fg)
@@ -84,34 +86,35 @@ str color256(int color, enum DrawAt bg_fg)
 	{
 		chadstr ascii_code = str("\033[38;5;", color, "m");
 									// ^ here is the difference
-									// shows correctly with 4 tab size
+								// shows correctly with 4 tab size
 		return ascii_code;
 	}
 	return NULL;
 }
 
-// (not)My lil bloat func
+// My lil (non)bloat func
 void draw_info(const char *flag_name)
 {
 	assert(flag_name != NULL);
 
 	const size_t len = strlen(flag_name);
 
-	char flag_name_all_caps[len];
-	char *pFlag_name_all_caps = flag_name_all_caps;
+	chair flag_name_all_caps[len];
+
 	for (size_t i = 0; i < len; ++i)
 	{
-		pFlag_name_all_caps[i] = toupper((unsigned char)flag_name[i]);
+		flag_name_all_caps[i] = toupper((unsigned char)flag_name[i]);
 	}
-	pFlag_name_all_caps[len] = '\0';
+	flag_name_all_caps[len] = '\0';
 
-	ENTRY entry, *pEntry = &entry;
-	pEntry->key = strdup(pFlag_name_all_caps);
+	ENTRY entry, *pEntry;
+	entry.key = strdup(flag_name_all_caps);
 
-	if (hsearch(*pEntry, FIND) == NULL)
+	pEntry = hsearch(entry, FIND);
+	if (pEntry == NULL)
 	{
 		fprintf(stderr, "'%s' was not found.\n", flag_name);
-		free(pEntry->key);
+		free(entry.key);
 		exit(EXIT_FAILURE);
 	}
 
@@ -158,6 +161,6 @@ for (size_t i = 0; i < sizeof(colors) / sizeof(colors[0]); ++i)
 	}
 */
 
-	free(pEntry->key);
-//	free(pEntry->data);
+	free(entry.key);
+//	free(entry.data);
 }
