@@ -4,7 +4,6 @@
 #include <search.h>
 #include <stdint.h>
 
-#define chair char
 #define MAX_ROWS 4
 
 typedef struct
@@ -16,8 +15,8 @@ typedef struct
 enum DrawAt {bg, fg};
 
 void _fill_htab(void);
-str color256(int color, enum DrawAt bg_fg);
-void draw_info(const char *flag_name);
+str color256(uint_least8_t color, enum DrawAt bg_fg);
+void draw_info(const char *flag_name, const char *argv[]);
 
 int main(int argc, char *argv[])
 {
@@ -43,15 +42,11 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	_fill_htab();
-	draw_info(argv[1]);
+	draw_info(argv[1], (const char**)argv);
 	hdestroy();
 	return EXIT_SUCCESS;
 }
 
-/* Mostly a technical function.
-	It fills hash table at the start of a program. Later may be
-	implemented in a completely different way or replaced completely.
-*/
 void _fill_htab(void)
 {
 	Flag flag1 = { "GLORY_TO_UKRAINE", {33, 33, 226, 226} };
@@ -70,10 +65,10 @@ void _fill_htab(void)
 //	free(entry.data);
 }
 
-str color256(int color, enum DrawAt bg_fg)
+str color256(uint_least8_t color, enum DrawAt bg_fg)
 {
 	// Check if in range
-	assert(color >= 0 && color <= 255 && bg_fg >= bg && bg_fg <= fg);
+	assert(bg_fg >= bg && bg_fg <= fg);
 
 	// for background
 	if (!bg_fg)
@@ -93,13 +88,12 @@ str color256(int color, enum DrawAt bg_fg)
 }
 
 // My lil (non)bloat func
-void draw_info(const char *flag_name)
+void draw_info(const char *flag_name, const char *argv[])
 {
 	assert(flag_name != NULL);
 
 	const size_t len = strlen(flag_name);
-
-	chair flag_name_all_caps[len];
+	char flag_name_all_caps[len];
 
 	for (size_t i = 0; i < len; ++i)
 	{
@@ -118,11 +112,29 @@ void draw_info(const char *flag_name)
 		exit(EXIT_FAILURE);
 	}
 
-	Flag colors;
-//	memcpy(colors, hsearch(*pEntry, FIND)->data, sizeof(colors));
-
-	uint_least8_t width = 20; // characters
+	// Compute width (in characters) according to the number of rows,
+	// basically even-or-odd.
+	uint_least8_t width = ((sizeof(*pEntry->data) / sizeof(pEntry->data[0])) % 1 == 0) ? 15 : 20;
 	uint_least8_t current_row = 0;
+
+	// TODO: Encapsulate it /***********************/
+	FILE *fp = popen("/usr/bin/env uname -srm", "r");
+	if (fp == NULL)
+	{
+		perror(argv[0]);
+		pclose(fp);
+		exit(EXIT_FAILURE);
+	}
+	char uname_info[1024];
+	fgets(uname_info, sizeof(uname_info), fp);
+	pclose(fp);
+	if (*uname_info == '\0') exit(EXIT_FAILURE);
+	/***********************************************/
+
+	// Dont decay into lead pls 😭😭
+	char reset[] = "\033[0m";
+
+
 /*
 printf("Displaying contents of %s:\n", flag_name);
 for (size_t i = 0; i < sizeof(colors) / sizeof(colors[0]); ++i)
