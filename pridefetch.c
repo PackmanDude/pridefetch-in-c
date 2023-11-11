@@ -1,6 +1,5 @@
-#define __USE_POSIX2
 #include <assert.h>
-#include <stdint.h>
+#define __USE_POSIX2
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,21 +20,20 @@
 # define unlikely(x) (x)
 #endif
 
-#define MAX_ROWS 4
 #define WIDTH 20
 #define COLOR_BUFFER_SIZE sizeof "\033[?8;5;???m"
 
 typedef struct
 {
 	const char *name;
-//	int row_thickness;
-	unsigned char rows[MAX_ROWS];
+	const unsigned char *rows;
+	size_t row_count;
 } Flag;
 
 static Flag flags[] =
 {
-	{ "UKRAINIAN", {33, 33, 11, 11} },
-	{ "UPA", {88, 88, 0, 0} }
+	{ "UKRAINIAN", (const unsigned char[]){33, 33, 11, 11}, 4 },
+	{ "UPA", (const unsigned char[]){88, 88, 0, 0}, 4 }
 };
 
 enum DrawAt {bg, fg};
@@ -102,12 +100,13 @@ draw_info(const Flag *flag)
 		exit(EXIT_FAILURE);
 	}
 	char row_info[256 + sizeof "\033[?8;5;???m" + sizeof reset];
-	for (size_t current_row = 0; current_row < sizeof flag->rows / sizeof *flag->rows; ++current_row)
+	_Bool is_odd_number_of_rows = flag->row_count % 2; // TODO: Increase row
+	// thickness if this equals false.
+	for (size_t current_row = 0; current_row < flag->row_count; ++current_row)
 	{
 		switch (current_row)
 		{
 			case 0:
-				// TODO: Read $PS1 instead.
 				if (unlikely(snprintf(row_info, sizeof row_info,
 					"%s\033[1m%s@%s%s", primary, username, osname.nodename,
 					reset) < 0)) exit(EXIT_FAILURE);
