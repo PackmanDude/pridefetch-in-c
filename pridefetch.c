@@ -1,9 +1,9 @@
 #define _XOPEN_SOURCE 1
 #include <assert.h>
-#include <ctype.h>
 #ifdef _GNU_SOURCE
 # include <getopt.h>
 #endif
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,8 +31,7 @@
 #ifndef numof
 # define numof(array) (sizeof array / sizeof *array)
 #endif
-#define LRAND48_MAX (2L * 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 \
-	* 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 - 1)
+#define LRAND48_MAX ((1L << 31) - 1)
 
 typedef struct
 {
@@ -75,66 +74,58 @@ color256(char *str, unsigned char color, enum DrawAt bg_fg)
 void
 format_uptime(char *str, size_t str_len, long uptime_secs)
 {
-	int updecades = uptime_secs / (60 * 60 * 24 * 365 * 10);
-	int upyears = uptime_secs / (60 * 60 * 24 * 365) % 10;
-	int upweeks = uptime_secs / (60 * 60 * 24 * 7) % 52;
-	int updays = uptime_secs / (60 * 60 * 24) % 7;
+	int updecades = uptime_secs / (60L * 60 * 24 * 365 * 10);
+	int upyears = uptime_secs / (60L * 60 * 24 * 365) % 10;
+	int upweeks = uptime_secs / (60L * 60 * 24 * 7) % 52;
+	int updays = uptime_secs / (60L * 60 * 24) % 7;
 	int uphours = uptime_secs / (60 * 60) % 24;
 	int upminutes = uptime_secs / 60 % 60;
-	int pos = 0;
-	int comma = 0;
+	size_t pos = 0;
 	int temp;
 
 	if (updecades)
 	{
-		temp = snprintf(str + pos, str_len - pos, "%d %s", updecades,
-			updecades != 1 ? "decades" : "decade");
+		temp = snprintf(str + pos, (str_len > pos) * (str_len - pos), "%d %s",
+			updecades, updecades != 1 ? "decades" : "decade");
 		if (unlikely(temp < 0)) exit(EXIT_FAILURE);
 		pos += temp;
-		++comma;
 	}
 	if (upyears)
 	{
-		temp = snprintf(str + pos, str_len - pos, "%s%d %s",
-			comma != 0 ? ", " : "", upyears,
-			upyears != 1 ? "years" : "year");
+		temp = snprintf(str + pos, (str_len > pos) * (str_len - pos),
+			"%s%d %s", pos ? ", " : "",
+			upyears, upyears != 1 ? "years" : "year");
 		if (unlikely(temp < 0)) exit(EXIT_FAILURE);
 		pos += temp;
-		++comma;
 	}
 	if (upweeks)
 	{
-		temp = snprintf(str + pos, str_len - pos, "%s%d %s",
-			comma != 0 ? ", " : "", upweeks,
-			upweeks != 1 ? "weeks" : "week");
+		temp = snprintf(str + pos, (str_len > pos) * (str_len - pos),
+			"%s%d %s", pos ? ", " : "",
+			upweeks, upweeks != 1 ? "weeks" : "week");
 		if (unlikely(temp < 0)) exit(EXIT_FAILURE);
 		pos += temp;
-		++comma;
 	}
 	if (updays)
 	{
-		temp = snprintf(str + pos, str_len - pos, "%s%d %s",
-			comma != 0 ? ", " : "", updays,
-			updays != 1 ? "days" : "day");
+		temp = snprintf(str + pos, (str_len > pos) * (str_len - pos),
+			"%s%d %s", pos ? ", " : "",
+			updays, updays != 1 ? "days" : "day");
 		if (unlikely(temp < 0)) exit(EXIT_FAILURE);
 		pos += temp;
-		++comma;
 	}
 	if (uphours)
 	{
-		temp = snprintf(str + pos, str_len - pos, "%s%d %s",
-			comma != 0 ? ", " : "", uphours,
-			uphours != 1 ? "hours" : "hour");
+		temp = snprintf(str + pos, (str_len > pos) * (str_len - pos),
+			"%s%d %s", pos ? ", " : "",
+			uphours, uphours != 1 ? "hours" : "hour");
 		if (unlikely(temp < 0)) exit(EXIT_FAILURE);
 		pos += temp;
-		++comma;
 	}
-	if (upminutes || (!upminutes && uptime_secs < 60))
-	{
-		if (unlikely(snprintf(str + pos, str_len - pos, "%s%d %s",
-			comma != 0 ? ", " : "", upminutes,
-			upminutes != 1 ? "minutes" : "minute") < 0)) exit(EXIT_FAILURE);
-	}
+	if (unlikely(snprintf(str + pos, (str_len > pos) * (str_len - pos),
+		"%s%d %s", pos ? ", " : "",
+		upminutes, upminutes != 1 ? "minutes" : "minute") < 0))
+		exit(EXIT_FAILURE);
 }
 
 void
@@ -147,7 +138,7 @@ draw_info(const Flag *flag)
 		perror("sysinfo");
 		exit(EXIT_FAILURE);
 	}
-	char *username = getlogin();
+	const char *username = getlogin();
 	if (unlikely(!username))
 	{
 		perror("getlogin");
@@ -159,7 +150,7 @@ draw_info(const Flag *flag)
 		perror("uname");
 		exit(EXIT_FAILURE);
 	}
-	FILE *pipe = popen(". /etc/os-release; [ \"$NAME\" ] && printf %s \"$NAME\"", "r");
+	FILE *pipe = popen(". /etc/os-release && [ \"$NAME\" ] && printf %s \"$NAME\"", "r");
 	if (unlikely(!pipe))
 	{
 		perror("popen");
@@ -182,7 +173,7 @@ draw_info(const Flag *flag)
 	while (++secondary_row < flag->row_count && flag->rows[secondary_row] == flag->rows[0]);
 	color256(secondary, flag->rows[secondary_row], fg);
 	// ensure 3:2 aspect ratio for terminal with 2x5 character size
-	const int width = flag->row_count * 3.75 + .5;
+	const size_t width = flag->row_count * 3.75 + .5;
 
 	/// 2.2 Output
 	if (unlikely(putchar('\n') == EOF && ferror(stdout)))
@@ -190,7 +181,7 @@ draw_info(const Flag *flag)
 		perror("putchar");
 		exit(EXIT_FAILURE);
 	}
-	char row_info[256 + sizeof "\033[?8;5;???m" + sizeof RESET];
+	char row_info[256 + COLOR_BUFFER_SIZE + sizeof RESET];
 	for (size_t current_row = 0; current_row < flag->row_count; ++current_row)
 	{
 		switch (current_row)
@@ -261,8 +252,7 @@ main(int argc, char *argv[])
 		{ "help", no_argument, NULL, 'h' },
 		{ 0 }
 	};
-	int _;
-	while ((option = getopt_long(argc, argv, "f:c:lh", longopts, &_)) != -1)
+	while ((option = getopt_long(argc, argv, "f:c:lh", longopts, NULL)) != -1)
 #else
 	while ((option = getopt(argc, argv, "f:c:lh")) != -1)
 #endif
@@ -271,26 +261,28 @@ main(int argc, char *argv[])
 		{
 			case 'f':
 			{
+				bool found = false;
 				for (size_t flag = 0; flag < numof(flags); ++flag)
 				{
 					if (!strcmp(optarg, flags[flag].name))
 					{
 						draw_info(&flags[flag]);
+						found = true;
 						break;
 					}
-					else if (flag == numof(flags) - 1)
-					{
-						fputs("No flag with that name was found.\n", stdout);
-						exit(EXIT_FAILURE);
-					}
+				}
+				if (!found)
+				{
+					fputs("No flag with that name was found.\n", stderr);
+					exit(EXIT_FAILURE);
 				}
 				break;
 			}
-			case 'c': // everything works, all 341 LOC, but this is broken
+			case 'c': // TODO: fix it.
 			{
 				Flag *list[numof(flags) * numof(flags)];
 				size_t i = 0;
-				for (char *token = strtok(optarg, ","); token != NULL; token = strtok(NULL, ","))
+				for (char *token = strtok(optarg, ", "); token != NULL; token = strtok(NULL, ", "))
 				{
 					for (size_t flag = 0; flag < numof(flags); ++flag)
 					{
@@ -304,9 +296,9 @@ main(int argc, char *argv[])
 				}
 				srand48(time(NULL));
 				long flag = lrand48();
-				while (flag >= LRAND48_MAX - (long)(LRAND48_MAX % (i + 1)))
+				while (flag >= LRAND48_MAX - (long)(LRAND48_MAX % i))
 					flag = lrand48();
-				draw_info(list[flag % (i + 1)]);
+				draw_info(list[flag % i]);
 				break;
 			}
 			case 'l':
@@ -325,7 +317,7 @@ main(int argc, char *argv[])
 				if (unlikely(puts("Options:\n"
 					"  -f, --flag FLAG\n"
 					"    Display the specified flag.\n"
-					"  -c, --choose FLAG1,FLAG2,FLAGN\n"
+					"  -c, --choose FLAG1, FLAG2, FLAGN\n"
 					"    Choose a flag randomly from the specified list.\n"
 					"  -l, --list\n"
 					"    List all flags.") == EOF)) exit(EXIT_FAILURE);
