@@ -28,9 +28,7 @@
 
 #define COLOR_BUFFER_SIZE sizeof "\033[?8;5;???m"
 #define RESET "\033[0m"
-#ifndef numof
-# define numof(array) (sizeof array / sizeof *array)
-#endif
+#define numof(array) (sizeof array / sizeof *array)
 #define LRAND48_MAX ((1L << 31) - 1)
 
 typedef struct
@@ -157,9 +155,9 @@ draw_info(const Flag *flag)
 		exit(EXIT_FAILURE);
 	}
 	char distro_name[64] = "N/A";
-	if (!fgets(distro_name, sizeof distro_name, pipe))
+	if (!fgets(distro_name, sizeof distro_name, pipe) && ferror(pipe))
 	{
-		if (ferror(pipe)) perror("pipe: fgets");
+		perror("fgets");
 		exit(EXIT_FAILURE);
 	}
 	pclose(pipe);
@@ -170,7 +168,7 @@ draw_info(const Flag *flag)
 	color256(primary, flag->rows[0], fg);
 	char secondary[COLOR_BUFFER_SIZE];
 	size_t secondary_row = 0;
-	while (++secondary_row < flag->row_count && flag->rows[secondary_row] == flag->rows[0]);
+	while (++secondary_row < flag->row_count - 1 && flag->rows[secondary_row] == flag->rows[0]);
 	color256(secondary, flag->rows[secondary_row], fg);
 	// ensure 3:2 aspect ratio for terminal with 2x5 character size
 	const size_t width = flag->row_count * 3.75 + .5;
