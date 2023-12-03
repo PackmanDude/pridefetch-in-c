@@ -174,7 +174,7 @@ draw_info(const Flag *flag)
 	const size_t width = flag->row_count * 3.75 + .5;
 
 	/// 2.2 Output
-	if (unlikely(putchar('\n') == EOF && ferror(stdout)))
+	if (unlikely(putchar('\n') == EOF))
 	{
 		perror("putchar");
 		exit(EXIT_FAILURE);
@@ -230,7 +230,7 @@ draw_info(const Flag *flag)
 		if (unlikely(printf(" %s%s\033[49m %s\n", color, row, row_info) < 0))
 			exit(EXIT_FAILURE);
 	}
-	if (unlikely(putchar('\n') == EOF && ferror(stdout)))
+	if (unlikely(putchar('\n') == EOF))
 	{
 		perror("putchar");
 		exit(EXIT_FAILURE);
@@ -271,7 +271,8 @@ main(int argc, char *argv[])
 				}
 				if (!found)
 				{
-					fputs("No flag with that name was found.\n", stderr);
+					if (unlikely(fputs("No flag with that name was found.\n",
+						stderr) == EOF)) perror("fputs");
 					exit(EXIT_FAILURE);
 				}
 				break;
@@ -302,7 +303,10 @@ main(int argc, char *argv[])
 			case 'l':
 			{
 				if (unlikely(puts("Available flags:") == EOF))
+				{
+					perror("puts");
 					exit(EXIT_FAILURE);
+				}
 				for (size_t flag = 0; flag < numof(flags) - 1; ++flag)
 					if (unlikely(printf("%s, ", flags[flag].name) < 0))
 						exit(EXIT_FAILURE);
@@ -318,7 +322,11 @@ main(int argc, char *argv[])
 					"  -c, --choose FLAG1, FLAG2, FLAGN\n"
 					"    Choose a flag randomly from the specified list.\n"
 					"  -l, --list\n"
-					"    List all flags.") == EOF)) exit(EXIT_FAILURE);
+					"    List all flags.") == EOF))
+				{
+					perror("puts");
+					exit(EXIT_FAILURE);
+				}
 				break;
 			}
 			default:
