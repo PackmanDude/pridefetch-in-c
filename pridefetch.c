@@ -4,7 +4,6 @@
 # include <getopt.h>
 #endif
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,44 +82,49 @@ format_uptime(char *str, size_t str_len, long uptime_secs)
 
 	if (updecades)
 	{
-		temp = snprintf(str + pos, (str_len > pos) * (str_len - pos), "%d %s",
+		temp = snprintf(str, str_len, "%d %s",
 			updecades, updecades != 1 ? "decades" : "decade");
 		if (unlikely(temp < 0)) exit(EXIT_FAILURE);
-		pos += temp;
+		if ((unsigned)temp >= str_len) return;
+		else pos += temp;
 	}
 	if (upyears)
 	{
-		temp = snprintf(str + pos, (str_len > pos) * (str_len - pos),
+		temp = snprintf(str + pos, str_len - pos,
 			"%s%d %s", pos ? ", " : "",
 			upyears, upyears != 1 ? "years" : "year");
 		if (unlikely(temp < 0)) exit(EXIT_FAILURE);
-		pos += temp;
+		if ((unsigned)temp >= str_len - pos) return;
+		else pos += temp;
 	}
 	if (upweeks)
 	{
-		temp = snprintf(str + pos, (str_len > pos) * (str_len - pos),
+		temp = snprintf(str + pos, str_len - pos,
 			"%s%d %s", pos ? ", " : "",
 			upweeks, upweeks != 1 ? "weeks" : "week");
 		if (unlikely(temp < 0)) exit(EXIT_FAILURE);
-		pos += temp;
+		if ((unsigned)temp >= str_len - pos) return;
+		else pos += temp;
 	}
 	if (updays)
 	{
-		temp = snprintf(str + pos, (str_len > pos) * (str_len - pos),
+		temp = snprintf(str + pos, str_len - pos,
 			"%s%d %s", pos ? ", " : "",
 			updays, updays != 1 ? "days" : "day");
 		if (unlikely(temp < 0)) exit(EXIT_FAILURE);
-		pos += temp;
+		if ((unsigned)temp >= str_len - pos) return;
+		else pos += temp;
 	}
 	if (uphours)
 	{
-		temp = snprintf(str + pos, (str_len > pos) * (str_len - pos),
+		temp = snprintf(str + pos, str_len - pos,
 			"%s%d %s", pos ? ", " : "",
 			uphours, uphours != 1 ? "hours" : "hour");
 		if (unlikely(temp < 0)) exit(EXIT_FAILURE);
-		pos += temp;
+		if ((unsigned)temp >= str_len - pos) return;
+		else pos += temp;
 	}
-	if (unlikely(snprintf(str + pos, (str_len > pos) * (str_len - pos),
+	if (unlikely(snprintf(str + pos, str_len - pos,
 		"%s%d %s", pos ? ", " : "",
 		upminutes, upminutes != 1 ? "minutes" : "minute") < 0))
 		exit(EXIT_FAILURE);
