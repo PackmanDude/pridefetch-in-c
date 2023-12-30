@@ -164,7 +164,11 @@ draw_info(const Flag *flag)
 		perror("fgets");
 		exit(EXIT_FAILURE);
 	}
-	pclose(pipe);
+	if (pclose(pipe) == -1)
+	{
+		perror("pclose");
+		exit(EXIT_FAILURE);
+	}
 
 	/// 2. Drawing
 	/// 2.1 Setting variables
