@@ -159,12 +159,12 @@ draw_info(const Flag *flag)
 		exit(EXIT_FAILURE);
 	}
 	char distro_name[64] = "N/A";
-	if (!fgets(distro_name, sizeof distro_name, pipe) && ferror(pipe))
+	if (unlikely(!fgets(distro_name, sizeof distro_name, pipe) && ferror(pipe)))
 	{
 		perror("fgets");
 		exit(EXIT_FAILURE);
 	}
-	if (pclose(pipe) == -1)
+	if (unlikely(pclose(pipe) == -1))
 	{
 		perror("pclose");
 		exit(EXIT_FAILURE);
