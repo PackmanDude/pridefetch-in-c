@@ -26,10 +26,10 @@
 #endif
 
 #define COLOR_BUFFER_SIZE sizeof "\033[?8;5;???m"
-#define RESET "\033[0m"
-#define numof(array) (sizeof array / sizeof *array)
 #define LRAND48_MAX ((1L << 31) - 1)
+#define numof(array) (sizeof array / sizeof *array)
 #define PERROR_AND_EXIT(s) { perror(s); exit(EXIT_FAILURE); }
+#define RESET "\033[0m"
 
 typedef struct
 {
@@ -40,20 +40,20 @@ typedef struct
 
 static Flag flags[] =
 {
-	{ "RAINBOW", (const unsigned char[]){196, 208, 226, 28, 20, 90}, 6},
-	{ "MLM", (const unsigned char[]){23, 43, 115, 255, 117, 57, 55}, 7},
-	{ "LESBIAN", (const unsigned char[]){202, 209, 255, 255, 168, 161}, 6},
+	{ "AGENDER", (const unsigned char[]){0, 251, 255, 149, 255, 251, 0}, 7},
+	{ "AROMANTIC", (const unsigned char[]){71, 149, 255, 249, 0}, 5},
+	{ "ASEXUAL", (const unsigned char[]){0, 0, 242, 242, 255, 255, 54, 54}, 8},
 	{ "BISEXUAL", (const unsigned char[]){198, 198, 97, 25, 25}, 5},
-	{ "PANSEXUAL", (const unsigned char[]){198, 198, 220, 220, 39, 39}, 6},
-	{ "TRANS", (const unsigned char[]){81, 211, 255, 211, 81}, 5},
-	{ "NONBINARY", (const unsigned char[]){226, 226, 255, 255, 98, 98, 237, 237}, 8},
 	{ "DEMIBOY", (const unsigned char[]){244, 249, 117, 255, 117, 249, 244}, 7},
 	{ "DEMIGIRL", (const unsigned char[]){244, 249, 218, 255, 218, 249, 244}, 7},
 	{ "GENDERFLUID", (const unsigned char[]){211, 255, 128, 0, 63}, 5},
-	{ "AROMANTIC", (const unsigned char[]){71, 149, 255, 249, 0}, 5},
-	{ "AGENDER", (const unsigned char[]){0, 251, 255, 149, 255, 251, 0}, 7},
-	{ "ASEXUAL", (const unsigned char[]){0, 0, 242, 242, 255, 255, 54, 54}, 8},
 	{ "GRAYSEXUAL", (const unsigned char[]){54, 242, 255, 242, 54}, 5},
+	{ "LESBIAN", (const unsigned char[]){202, 209, 255, 255, 168, 161}, 6},
+	{ "MLM", (const unsigned char[]){23, 43, 115, 255, 117, 57, 55}, 7},
+	{ "NONBINARY", (const unsigned char[]){226, 226, 255, 255, 98, 98, 237, 237}, 8},
+	{ "PANSEXUAL", (const unsigned char[]){198, 198, 220, 220, 39, 39}, 6},
+	{ "RAINBOW", (const unsigned char[]){196, 208, 226, 28, 20, 90}, 6},
+	{ "TRANS", (const unsigned char[]){81, 211, 255, 211, 81}, 5},
 	{ "UKRAINIAN", (const unsigned char[]){33, 33, 33, 11, 11, 11}, 6},
 	{ "UPA", (const unsigned char[]){88, 88, 88, 0, 0, 0}, 6}
 };
