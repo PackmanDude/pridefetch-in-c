@@ -29,6 +29,7 @@
 #define RESET "\033[0m"
 #define numof(array) (sizeof array / sizeof *array)
 #define LRAND48_MAX ((1L << 31) - 1)
+#define PERROR_AND_EXIT(s) { perror(s); exit(EXIT_FAILURE); }
 
 typedef struct
 {
@@ -84,7 +85,7 @@ format_uptime(char *str, size_t str_len, long uptime_secs)
 	{
 		temp = snprintf(str, str_len, "%d %s",
 			updecades, updecades != 1 ? "decades" : "decade");
-		if (unlikely(temp < 0)) exit(EXIT_FAILURE);
+		if (unlikely(temp < 0)) PERROR_AND_EXIT("snprintf")
 		if ((unsigned)temp >= str_len) return;
 		else pos += temp;
 	}
@@ -93,7 +94,7 @@ format_uptime(char *str, size_t str_len, long uptime_secs)
 		temp = snprintf(str + pos, str_len - pos,
 			"%s%d %s", pos ? ", " : "",
 			upyears, upyears != 1 ? "years" : "year");
-		if (unlikely(temp < 0)) exit(EXIT_FAILURE);
+		if (unlikely(temp < 0)) PERROR_AND_EXIT("snprintf")
 		if ((unsigned)temp >= str_len - pos) return;
 		else pos += temp;
 	}
@@ -102,7 +103,7 @@ format_uptime(char *str, size_t str_len, long uptime_secs)
 		temp = snprintf(str + pos, str_len - pos,
 			"%s%d %s", pos ? ", " : "",
 			upweeks, upweeks != 1 ? "weeks" : "week");
-		if (unlikely(temp < 0)) exit(EXIT_FAILURE);
+		if (unlikely(temp < 0)) PERROR_AND_EXIT("snprintf")
 		if ((unsigned)temp >= str_len - pos) return;
 		else pos += temp;
 	}
@@ -111,7 +112,7 @@ format_uptime(char *str, size_t str_len, long uptime_secs)
 		temp = snprintf(str + pos, str_len - pos,
 			"%s%d %s", pos ? ", " : "",
 			updays, updays != 1 ? "days" : "day");
-		if (unlikely(temp < 0)) exit(EXIT_FAILURE);
+		if (unlikely(temp < 0)) PERROR_AND_EXIT("snprintf")
 		if ((unsigned)temp >= str_len - pos) return;
 		else pos += temp;
 	}
@@ -120,14 +121,14 @@ format_uptime(char *str, size_t str_len, long uptime_secs)
 		temp = snprintf(str + pos, str_len - pos,
 			"%s%d %s", pos ? ", " : "",
 			uphours, uphours != 1 ? "hours" : "hour");
-		if (unlikely(temp < 0)) exit(EXIT_FAILURE);
+		if (unlikely(temp < 0)) PERROR_AND_EXIT("snprintf")
 		if ((unsigned)temp >= str_len - pos) return;
 		else pos += temp;
 	}
 	if (unlikely(snprintf(str + pos, str_len - pos,
 		"%s%d %s", pos ? ", " : "",
 		upminutes, upminutes != 1 ? "minutes" : "minute") < 0))
-		exit(EXIT_FAILURE);
+		PERROR_AND_EXIT("snprintf")
 }
 
 void
@@ -135,40 +136,18 @@ draw_info(const Flag *flag)
 {
 	/// 1. Gathering
 	struct sysinfo sys_info;
-	if (unlikely(sysinfo(&sys_info)))
-	{
-		perror("sysinfo");
-		exit(EXIT_FAILURE);
-	}
+	if (unlikely(sysinfo(&sys_info))) PERROR_AND_EXIT("sysinfo")
 	const char *username = getlogin();
-	if (unlikely(!username))
-	{
-		perror("getlogin");
-		exit(EXIT_FAILURE);
-	}
+	if (unlikely(!username)) PERROR_AND_EXIT("getlogin")
 	struct utsname osname;
-	if (unlikely(uname(&osname) == -1))
-	{
-		perror("uname");
-		exit(EXIT_FAILURE);
-	}
-	FILE *pipe = popen(". /etc/os-release && [ \"$NAME\" ] && printf %s \"$NAME\"", "r");
-	if (unlikely(!pipe))
-	{
-		perror("popen");
-		exit(EXIT_FAILURE);
-	}
+	if (unlikely(uname(&osname) == -1)) PERROR_AND_EXIT("uname")
+	FILE *pipe = popen(". /etc/os-release && [ \"$NAME\" ]"
+		" && printf %s \"$NAME\"", "r");
+	if (unlikely(!pipe)) PERROR_AND_EXIT("popen")
 	char distro_name[64] = "N/A";
 	if (unlikely(!fgets(distro_name, sizeof distro_name, pipe) && ferror(pipe)))
-	{
-		perror("fgets");
-		exit(EXIT_FAILURE);
-	}
-	if (unlikely(pclose(pipe) == -1))
-	{
-		perror("pclose");
-		exit(EXIT_FAILURE);
-	}
+		PERROR_AND_EXIT("fgets")
+	if (unlikely(pclose(pipe) == -1)) PERROR_AND_EXIT("pclose")
 
 	/// 2. Drawing
 	/// 2.1 Setting variables
@@ -176,17 +155,14 @@ draw_info(const Flag *flag)
 	color256(primary, flag->rows[0], fg);
 	char secondary[COLOR_BUFFER_SIZE];
 	size_t secondary_row = 0;
-	while (secondary_row < flag->row_count - 1 && flag->rows[secondary_row++] == flag->rows[0]);
+	while (secondary_row < flag->row_count - 1
+		&& flag->rows[secondary_row++] == flag->rows[0]);
 	color256(secondary, flag->rows[secondary_row], fg);
 	// ensure 3:2 aspect ratio for terminal with 2x5 character size
 	const size_t width = flag->row_count * 3.75 + .5;
 
 	/// 2.2 Output
-	if (unlikely(putchar('\n') == EOF))
-	{
-		perror("putchar");
-		exit(EXIT_FAILURE);
-	}
+	if (unlikely(putchar('\n') == EOF)) PERROR_AND_EXIT("putchar")
 	char row_info[256 + COLOR_BUFFER_SIZE + sizeof RESET];
 	for (size_t current_row = 0; current_row < flag->row_count; ++current_row)
 	{
@@ -196,19 +172,21 @@ draw_info(const Flag *flag)
 			{
 				if (unlikely(snprintf(row_info, sizeof row_info,
 					"%s\033[1m%s@%s%s", primary, username, osname.nodename,
-					RESET) < 0)) exit(EXIT_FAILURE);
+					RESET) < 0)) PERROR_AND_EXIT("snprintf")
 				break;
 			}
 			case 1:
 			{
 				if (unlikely(snprintf(row_info, sizeof row_info, "%sos%10s%s",
-					secondary, RESET, distro_name ) < 0)) exit(EXIT_FAILURE);
+					secondary, RESET, distro_name ) < 0))
+					PERROR_AND_EXIT("snprintf")
 				break;
 			}
 			case 2:
 			{
 				if (unlikely(snprintf(row_info, sizeof row_info, "%sarch%8s%s",
-					secondary, RESET, osname.machine) < 0)) exit(EXIT_FAILURE);
+					secondary, RESET, osname.machine) < 0))
+					PERROR_AND_EXIT("snprintf")
 				break;
 			}
 			case 3:
@@ -216,13 +194,15 @@ draw_info(const Flag *flag)
 				char uptime[256];
 				format_uptime(uptime, sizeof uptime, sys_info.uptime);
 				if (unlikely(snprintf(row_info, sizeof row_info, "%suptime%6s%s",
-					secondary, RESET, uptime) < 0)) exit(EXIT_FAILURE);
+					secondary, RESET, uptime) < 0))
+					PERROR_AND_EXIT("snprintf")
 				break;
 			}
 			case 4:
 			{
 				if (unlikely(snprintf(row_info, sizeof row_info, "%skern%8s%s",
-					secondary, RESET, osname.release) < 0)) exit(EXIT_FAILURE);
+					secondary, RESET, osname.release) < 0))
+					PERROR_AND_EXIT("snprintf")
 				break;
 			}
 			default:
@@ -236,13 +216,9 @@ draw_info(const Flag *flag)
 		memset(row, ' ', width);
 		row[width] = '\0';
 		if (unlikely(printf(" %s%s\033[49m %s\n", color, row, row_info) < 0))
-			exit(EXIT_FAILURE);
+			PERROR_AND_EXIT("printf")
 	}
-	if (unlikely(putchar('\n') == EOF))
-	{
-		perror("putchar");
-		exit(EXIT_FAILURE);
-	}
+	if (unlikely(putchar('\n') == EOF)) PERROR_AND_EXIT("putchar")
 }
 
 int
@@ -311,15 +287,12 @@ main(int argc, char *argv[])
 			case 'l':
 			{
 				if (unlikely(puts("Available flags:") == EOF))
-				{
-					perror("puts");
-					exit(EXIT_FAILURE);
-				}
+					PERROR_AND_EXIT("puts")
 				for (size_t flag = 0; flag < numof(flags) - 1; ++flag)
 					if (unlikely(printf("%s, ", flags[flag].name) < 0))
-						exit(EXIT_FAILURE);
+						PERROR_AND_EXIT("printf")
 				if (unlikely(printf("%s.\n", flags[numof(flags) - 1].name) < 0))
-					exit(EXIT_FAILURE);
+					PERROR_AND_EXIT("printf")
 				break;
 			}
 			case 'h':
@@ -330,11 +303,7 @@ main(int argc, char *argv[])
 					"  -c, --choose FLAG1, FLAG2, FLAGN\n"
 					"    Choose a flag randomly from the specified list.\n"
 					"  -l, --list\n"
-					"    List all flags.") == EOF))
-				{
-					perror("puts");
-					exit(EXIT_FAILURE);
-				}
+					"    List all flags.") == EOF)) PERROR_AND_EXIT("puts")
 				break;
 			}
 			default:
