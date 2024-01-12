@@ -176,7 +176,7 @@ draw_info(const Flag *flag)
 	color256(primary, flag->rows[0], fg);
 	char secondary[COLOR_BUFFER_SIZE];
 	size_t secondary_row = 0;
-	while (++secondary_row < flag->row_count - 1 && flag->rows[secondary_row] == flag->rows[0]);
+	while (secondary_row < flag->row_count - 1 && flag->rows[secondary_row++] == flag->rows[0]);
 	color256(secondary, flag->rows[secondary_row], fg);
 	// ensure 3:2 aspect ratio for terminal with 2x5 character size
 	const size_t width = flag->row_count * 3.75 + .5;
