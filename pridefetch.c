@@ -1,4 +1,4 @@
-#define _XOPEN_SOURCE 1
+#define _XOPEN_SOURCE
 #include <assert.h>
 #ifdef _GNU_SOURCE
 # include <getopt.h>
@@ -26,8 +26,8 @@
 #endif
 
 #define COLOR_BUFFER_SIZE sizeof "\033[?8;5;???m"
-#define LRAND48_MAX ((1L << 31) - 1)
-#define numof(array) (sizeof array / sizeof *array)
+#define NUMOF(array) (sizeof array / sizeof *array)
+#define FLAG(name, ...) { #name, (const unsigned char[]){__VA_ARGS__}, NUMOF(((const unsigned char[]){__VA_ARGS__})) }
 #define PERROR_AND_EXIT(s) { perror(s); exit(EXIT_FAILURE); }
 #define RESET "\033[0m"
 
@@ -40,22 +40,22 @@ typedef struct
 
 static Flag flags[] =
 {
-	{ "AGENDER", (const unsigned char[]){0, 251, 255, 149, 255, 251, 0}, 7},
-	{ "AROMANTIC", (const unsigned char[]){71, 149, 255, 249, 0}, 5},
-	{ "ASEXUAL", (const unsigned char[]){0, 0, 242, 242, 255, 255, 54, 54}, 8},
-	{ "BISEXUAL", (const unsigned char[]){198, 198, 97, 25, 25}, 5},
-	{ "DEMIBOY", (const unsigned char[]){244, 249, 117, 255, 117, 249, 244}, 7},
-	{ "DEMIGIRL", (const unsigned char[]){244, 249, 218, 255, 218, 249, 244}, 7},
-	{ "GENDERFLUID", (const unsigned char[]){211, 255, 128, 0, 63}, 5},
-	{ "GRAYSEXUAL", (const unsigned char[]){54, 242, 255, 242, 54}, 5},
-	{ "LESBIAN", (const unsigned char[]){202, 209, 255, 255, 168, 161}, 6},
-	{ "MLM", (const unsigned char[]){23, 43, 115, 255, 117, 57, 55}, 7},
-	{ "NONBINARY", (const unsigned char[]){226, 226, 255, 255, 98, 98, 237, 237}, 8},
-	{ "PANSEXUAL", (const unsigned char[]){198, 198, 220, 220, 39, 39}, 6},
-	{ "RAINBOW", (const unsigned char[]){196, 208, 226, 28, 20, 90}, 6},
-	{ "TRANS", (const unsigned char[]){81, 211, 255, 211, 81}, 5},
-	{ "UKRAINIAN", (const unsigned char[]){33, 33, 33, 11, 11, 11}, 6},
-	{ "UPA", (const unsigned char[]){88, 88, 88, 0, 0, 0}, 6}
+	FLAG(AGENDER, 0, 251, 255, 149, 255, 251, 0),
+	FLAG(AROMANTIC, 71, 149, 255, 249, 0),
+	FLAG(ASEXUAL, 0, 0, 242, 242, 255, 255, 54, 54),
+	FLAG(BISEXUAL, 198, 198, 97, 25, 25),
+	FLAG(DEMIBOY, 244, 249, 117, 255, 117, 249, 244),
+	FLAG(DEMIGIRL, 244, 249, 218, 255, 218, 249, 244),
+	FLAG(GENDERFLUID, 211, 255, 128, 0, 63),
+	FLAG(GRAYSEXUAL, 54, 242, 255, 242, 54),
+	FLAG(LESBIAN, 202, 209, 255, 255, 168, 161),
+	FLAG(MLM, 23, 43, 115, 255, 117, 57, 55),
+	FLAG(NONBINARY, 226, 226, 255, 255, 98, 98, 237, 237),
+	FLAG(PANSEXUAL, 198, 198, 220, 220, 39, 39),
+	FLAG(RAINBOW, 196, 208, 226, 28, 20, 90),
+	FLAG(TRANS, 81, 211, 255, 211, 81),
+	FLAG(UKRAINIAN, 33, 33, 33, 11, 11, 11),
+	FLAG(UPA, 88, 88, 88, 0, 0, 0)
 };
 
 enum DrawAt {bg, fg};
@@ -221,9 +221,36 @@ draw_info(const Flag *flag)
 	if (unlikely(putchar('\n') == EOF)) PERROR_AND_EXIT("putchar")
 }
 
+void
+display_help(void)
+{
+#ifdef _GNU_SOURCE
+	if (unlikely(puts("Options:\n"
+		"  -f, --flag FLAG\n"
+		"    Display the specified flag.\n"
+		"  -c, --choose FLAG1, FLAG2, FLAGN\n"
+		"    Choose a flag randomly from the specified list.\n"
+		"  -l, --list\n"
+		"    List all flags.") == EOF)) PERROR_AND_EXIT("puts")
+#else
+	if (unlikely(puts("Options:\n"
+		"  -f FLAG\n"
+		"    Display the specified flag.\n"
+		"  -c FLAG1, FLAG2, FLAGN\n"
+		"    Choose a flag randomly from the specified list.\n"
+		"  -l\n"
+		"    List all flags.") == EOF)) PERROR_AND_EXIT("puts")
+#endif
+}
+
 int
 main(int argc, char *argv[])
 {
+	if (argc < 2)
+	{
+		display_help();
+		return EXIT_FAILURE;
+	}
 	int option;
 #ifdef _GNU_SOURCE
 	const struct option longopts[] =
@@ -244,7 +271,7 @@ main(int argc, char *argv[])
 			case 'f':
 			{
 				bool found = false;
-				for (size_t flag = 0; flag < numof(flags); ++flag)
+				for (size_t flag = 0; flag < NUMOF(flags); ++flag)
 				{
 					if (!strcmp(optarg, flags[flag].name))
 					{
@@ -257,58 +284,50 @@ main(int argc, char *argv[])
 				{
 					if (unlikely(fputs("No flag with that name was found.\n",
 						stderr) == EOF)) perror("fputs");
-					exit(EXIT_FAILURE);
+					return EXIT_FAILURE;
 				}
 				break;
 			}
-			case 'c': // TODO: fix it.
+			case 'c': // kinda works
 			{
-				Flag *list[numof(flags) * numof(flags)];
-				size_t i = 0;
+				size_t choices[NUMOF(flags) * NUMOF(flags)];
+				size_t i_choice = 0;
 				for (char *token = strtok(optarg, ", "); token != NULL; token = strtok(NULL, ", "))
 				{
-					for (size_t flag = 0; flag < numof(flags); ++flag)
+					for (size_t i_flag = 0; i_flag < NUMOF(flags); ++i_flag)
 					{
-						if (!strcmp(token, flags[flag].name))
+						if (!strcmp(token, flags[i_flag].name))
 						{
-							list[i] = &flags[flag];
+							choices[i_choice] = i_flag;
+							++i_choice;
 							break;
 						}
 					}
-					if (++i == numof(list)) break;
+					if (i_choice == NUMOF(choices)) break;
 				}
 				srand48(time(NULL));
-				long flag = lrand48();
-				while (flag >= LRAND48_MAX - (long)(LRAND48_MAX % i))
-					flag = lrand48();
-				draw_info(list[flag % i]);
+				draw_info(&flags[choices[(size_t)(drand48() * i_choice)]]);
 				break;
 			}
 			case 'l':
 			{
 				if (unlikely(puts("Available flags:") == EOF))
 					PERROR_AND_EXIT("puts")
-				for (size_t flag = 0; flag < numof(flags) - 1; ++flag)
+				for (size_t flag = 0; flag < NUMOF(flags) - 1; ++flag)
 					if (unlikely(printf("%s, ", flags[flag].name) < 0))
 						PERROR_AND_EXIT("printf")
-				if (unlikely(printf("%s.\n", flags[numof(flags) - 1].name) < 0))
+				if (unlikely(printf("%s.\n", flags[NUMOF(flags) - 1].name) < 0))
 					PERROR_AND_EXIT("printf")
 				break;
 			}
 			case 'h':
 			{
-				if (unlikely(puts("Options:\n"
-					"  -f, --flag FLAG\n"
-					"    Display the specified flag.\n"
-					"  -c, --choose FLAG1, FLAG2, FLAGN\n"
-					"    Choose a flag randomly from the specified list.\n"
-					"  -l, --list\n"
-					"    List all flags.") == EOF)) PERROR_AND_EXIT("puts")
+				display_help();
 				break;
 			}
 			default:
 			{
-				exit(EXIT_FAILURE);
+				return EXIT_FAILURE;
 			}
 		}
 	}
