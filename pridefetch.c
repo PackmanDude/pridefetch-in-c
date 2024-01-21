@@ -3,7 +3,6 @@
 #ifdef _GNU_SOURCE
 # include <getopt.h>
 #endif
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -270,22 +269,23 @@ main(int argc, char *argv[])
 		{
 			case 'f':
 			{
-				bool found = false;
-				for (size_t flag = 0; flag < NUMOF(flags); ++flag)
+				for (size_t i = 0; i < NUMOF(flags); ++i)
 				{
-					if (!strcmp(optarg, flags[flag].name))
+					const char *flag_name = flags[i].name;
+					const size_t input_len = strlen(optarg);
+					size_t c = 0;
+					for (;;)
 					{
-						draw_info(&flags[flag]);
-						found = true;
-						break;
+						if (optarg[c] != flag_name[c]) break;
+						if (++c == input_len)
+						{
+							draw_info(&flags[i]);
+							return EXIT_SUCCESS;
+						}
 					}
 				}
-				if (!found)
-				{
-					if (unlikely(fputs("No flag with that name was found.\n",
-						stderr) == EOF)) perror("fputs");
-					return EXIT_FAILURE;
-				}
+				if (unlikely(fputs("No flag with that name was found.\n",
+					stderr) == EOF)) PERROR_AND_EXIT("fputs")
 				break;
 			}
 			case 'c': // kinda works
@@ -296,11 +296,18 @@ main(int argc, char *argv[])
 				{
 					for (size_t i_flag = 0; i_flag < NUMOF(flags); ++i_flag)
 					{
-						if (!strcmp(token, flags[i_flag].name))
+						const char *flag_name = flags[i_flag].name;
+						const size_t input_len = strlen(token);
+						size_t c = 0;
+						for (;;)
 						{
-							choices[i_choice] = i_flag;
-							++i_choice;
-							break;
+							if (token[c] != flag_name[c]) break;
+							if (++c == input_len)
+							{
+								choices[i_choice] = i_flag;
+								++i_choice;
+								break;
+							}
 						}
 					}
 					if (i_choice == NUMOF(choices)) break;
