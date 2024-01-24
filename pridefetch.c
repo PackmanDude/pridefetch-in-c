@@ -242,6 +242,11 @@ display_help(void)
 #endif
 }
 
+int comparator(const void *key, const void *flag)
+{
+	return strcmp(key, ((const Flag *)flag)->name);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -269,51 +274,34 @@ main(int argc, char *argv[])
 		{
 			case 'f':
 			{
-				for (size_t i = 0; i < NUMOF(flags); ++i)
+				const Flag *flag = bsearch(optarg, flags, NUMOF(flags), sizeof *flags, comparator);
+				if (!flag)
 				{
-					const char *flag_name = flags[i].name;
-					const size_t input_len = strlen(optarg);
-					size_t c = 0;
-					for (;;)
-					{
-						if (optarg[c] != flag_name[c]) break;
-						if (++c == input_len)
-						{
-							draw_info(&flags[i]);
-							return EXIT_SUCCESS;
-						}
-					}
+					if (unlikely(fputs("No flag with that name was found.\n",
+						stderr) == EOF)) PERROR_AND_EXIT("fputs")
+					return EXIT_FAILURE;
 				}
-				if (unlikely(fputs("No flag with that name was found.\n",
-					stderr) == EOF)) PERROR_AND_EXIT("fputs")
+				draw_info(flag);
 				break;
 			}
 			case 'c': // kinda works
 			{
-				size_t choices[NUMOF(flags) * NUMOF(flags)];
+				const Flag *choices[NUMOF(flags) * NUMOF(flags)];
 				size_t i_choice = 0;
 				for (char *token = strtok(optarg, ", "); token != NULL; token = strtok(NULL, ", "))
 				{
-					for (size_t i_flag = 0; i_flag < NUMOF(flags); ++i_flag)
+					const Flag *flag = bsearch(token, flags, NUMOF(flags), sizeof *flags, comparator);
+					if (!flag)
 					{
-						const char *flag_name = flags[i_flag].name;
-						const size_t input_len = strlen(token);
-						size_t c = 0;
-						for (;;)
-						{
-							if (token[c] != flag_name[c]) break;
-							if (++c == input_len)
-							{
-								choices[i_choice] = i_flag;
-								++i_choice;
-								break;
-							}
-						}
+						if (unlikely(fputs("No flag with that name was found.\n",
+							stderr) == EOF)) PERROR_AND_EXIT("fputs")
+						return EXIT_FAILURE;
 					}
-					if (i_choice == NUMOF(choices)) break;
+					choices[i_choice] = flag;
+					if (++i_choice == NUMOF(choices)) break;
 				}
 				srand48(time(NULL));
-				draw_info(&flags[choices[(size_t)(drand48() * i_choice)]]);
+				draw_info(choices[(size_t)(drand48() * i_choice)]);
 				break;
 			}
 			case 'l':
