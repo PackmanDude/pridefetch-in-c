@@ -64,7 +64,7 @@ color256(char *str, unsigned char color, enum DrawAt bg_fg)
 {
 	assert(bg_fg >= bg && bg_fg <= fg);
 	if (unlikely(snprintf(str, COLOR_BUFFER_SIZE, "\033[%d8;5;%um",
-		4 - bg_fg, color) < 0)) exit(EXIT_FAILURE);
+		4 - bg_fg, color) < 0)) PERROR_AND_EXIT("snprintf")
 }
 
 // borrowed from procps
@@ -155,7 +155,7 @@ draw_info(const Flag *flag)
 	char secondary[COLOR_BUFFER_SIZE];
 	size_t secondary_row = 0;
 	while (secondary_row < flag->row_count - 1
-		&& flag->rows[secondary_row++] == flag->rows[0]);
+		&& flag->rows[secondary_row] == flag->rows[0]) ++secondary_row;
 	color256(secondary, flag->rows[secondary_row], fg);
 	// ensure 3:2 aspect ratio for terminal with 2x5 character size
 	const size_t width = flag->row_count * 3.75 + .5;
@@ -274,7 +274,8 @@ main(int argc, char *argv[])
 		{
 			case 'f':
 			{
-				const Flag *flag = bsearch(optarg, flags, NUMOF(flags), sizeof *flags, comparator);
+				const Flag *flag = bsearch(optarg, flags, NUMOF(flags),
+					sizeof *flags, comparator);
 				if (!flag)
 				{
 					if (unlikely(fputs("No flag with that name was found.\n",
