@@ -176,14 +176,14 @@ draw_info(const Flag *flag)
 			}
 			case 1:
 			{
-				if (unlikely(snprintf(row_info, sizeof row_info, "%sos%10s%s",
+				if (unlikely(snprintf(row_info, sizeof row_info, "%sos%-10s%s",
 					secondary, RESET, distro_name ) < 0))
 					PERROR_AND_EXIT("snprintf")
 				break;
 			}
 			case 2:
 			{
-				if (unlikely(snprintf(row_info, sizeof row_info, "%sarch%8s%s",
+				if (unlikely(snprintf(row_info, sizeof row_info, "%sarch%-8s%s",
 					secondary, RESET, osname.machine) < 0))
 					PERROR_AND_EXIT("snprintf")
 				break;
@@ -192,14 +192,14 @@ draw_info(const Flag *flag)
 			{
 				char uptime[256];
 				format_uptime(uptime, sizeof uptime, sys_info.uptime);
-				if (unlikely(snprintf(row_info, sizeof row_info, "%suptime%6s%s",
+				if (unlikely(snprintf(row_info, sizeof row_info, "%suptime%-6s%s",
 					secondary, RESET, uptime) < 0))
 					PERROR_AND_EXIT("snprintf")
 				break;
 			}
 			case 4:
 			{
-				if (unlikely(snprintf(row_info, sizeof row_info, "%skern%8s%s",
+				if (unlikely(snprintf(row_info, sizeof row_info, "%skern%-8s%s",
 					secondary, RESET, osname.release) < 0))
 					PERROR_AND_EXIT("snprintf")
 				break;
