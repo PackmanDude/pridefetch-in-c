@@ -71,12 +71,12 @@ color256(char *str, unsigned char color, enum DrawAt bg_fg)
 void
 format_uptime(char *str, size_t str_len, long uptime_secs)
 {
-	int updecades = uptime_secs / (60L * 60 * 24 * 365 * 10);
-	int upyears = uptime_secs / (60L * 60 * 24 * 365) % 10;
-	int upweeks = uptime_secs / (60L * 60 * 24 * 7) % 52;
-	int updays = uptime_secs / (60L * 60 * 24) % 7;
-	int uphours = uptime_secs / (60 * 60) % 24;
-	int upminutes = uptime_secs / 60 % 60;
+	const int updecades = uptime_secs / (60L * 60 * 24 * 365 * 10);
+	const int upyears = uptime_secs / (60L * 60 * 24 * 365) % 10;
+	const int upweeks = uptime_secs / (60L * 60 * 24 * 7) % 52;
+	const int updays = uptime_secs / (60L * 60 * 24) % 7;
+	const int uphours = uptime_secs / (60 * 60) % 24;
+	const int upminutes = uptime_secs / 60 % 60;
 	size_t pos = 0;
 	int temp;
 
