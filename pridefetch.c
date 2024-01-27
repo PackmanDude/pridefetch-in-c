@@ -140,13 +140,13 @@ draw_info(const Flag *flag)
 	if (unlikely(!username)) PERROR_AND_EXIT("getlogin")
 	struct utsname osname;
 	if (unlikely(uname(&osname) == -1)) PERROR_AND_EXIT("uname")
-	FILE *pipe = popen(". /etc/os-release && [ \"$NAME\" ]"
+	FILE *a_pipe = popen(". /etc/os-release && [ \"$NAME\" ]"
 		" && printf %s \"$NAME\"", "r");
-	if (unlikely(!pipe)) PERROR_AND_EXIT("popen")
+	if (unlikely(!a_pipe)) PERROR_AND_EXIT("popen")
 	char distro_name[64] = "N/A";
-	if (unlikely(!fgets(distro_name, sizeof distro_name, pipe) && ferror(pipe)))
+	if (unlikely(!fgets(distro_name, sizeof distro_name, a_pipe) && ferror(a_pipe)))
 		PERROR_AND_EXIT("fgets")
-	if (unlikely(pclose(pipe) == -1)) PERROR_AND_EXIT("pclose")
+	if (unlikely(pclose(a_pipe) == -1)) PERROR_AND_EXIT("pclose")
 
 	/// 2. Drawing
 	/// 2.1 Setting variables
