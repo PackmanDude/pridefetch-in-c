@@ -177,7 +177,7 @@ draw_info(const Flag *flag)
 			case 1:
 			{
 				if (unlikely(snprintf(row_info, sizeof row_info, "%sos%-10s%s",
-					secondary, RESET, distro_name ) < 0))
+					secondary, RESET, distro_name) < 0))
 					PERROR_AND_EXIT("snprintf")
 				break;
 			}
