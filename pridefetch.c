@@ -34,10 +34,10 @@ typedef struct
 {
 	const char *name;
 	const unsigned char *rows;
-	const size_t row_count;
+	size_t row_count;
 } Flag;
 
-static Flag flags[] =
+static const Flag flags[] =
 {
 	FLAG(AGENDER, 0, 251, 255, 149, 255, 251, 0),
 	FLAG(AROMANTIC, 71, 149, 255, 249, 0),
