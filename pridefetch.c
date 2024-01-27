@@ -28,7 +28,7 @@
 #define NUMOF(array) (sizeof array / sizeof *array)
 #define FLAG(name, ...) { #name, (const unsigned char[]){__VA_ARGS__}, NUMOF(((const unsigned char[]){__VA_ARGS__})) }
 #define PERROR_AND_EXIT(s) { perror(s); exit(EXIT_FAILURE); }
-#define RESET "\033[0m"
+#define RESET "\033[m"
 
 typedef struct
 {
@@ -162,7 +162,7 @@ draw_info(const Flag *flag)
 
 	/// 2.2 Output
 	if (unlikely(putchar('\n') == EOF)) PERROR_AND_EXIT("putchar")
-	char row_info[256 + COLOR_BUFFER_SIZE + sizeof RESET];
+	char row_info[256 + COLOR_BUFFER_SIZE - 1 + sizeof RESET - 1];
 	for (size_t current_row = 0; current_row < flag->row_count; ++current_row)
 	{
 		switch (current_row)
@@ -170,8 +170,8 @@ draw_info(const Flag *flag)
 			case 0:
 			{
 				if (unlikely(snprintf(row_info, sizeof row_info,
-					"%s\033[1m%s@%s%s", primary, username, osname.nodename,
-					RESET) < 0)) PERROR_AND_EXIT("snprintf")
+					"%s\033[1m%s@%s" RESET, primary, username, osname.nodename)
+					< 0)) PERROR_AND_EXIT("snprintf")
 				break;
 			}
 			case 1:
@@ -214,7 +214,7 @@ draw_info(const Flag *flag)
 		char row[width + 1];
 		memset(row, ' ', width);
 		row[width] = '\0';
-		if (unlikely(printf(" %s%s\033[49m %s\n", color, row, row_info) < 0))
+		if (unlikely(printf(" %s%s" RESET " %s\n", color, row, row_info) < 0))
 			PERROR_AND_EXIT("printf")
 	}
 	if (unlikely(putchar('\n') == EOF)) PERROR_AND_EXIT("putchar")
