@@ -59,7 +59,7 @@ static const Flag flags[] =
 
 enum DrawAt {bg, fg};
 
-void
+static void
 color256(char *str, unsigned char color, enum DrawAt bg_fg)
 {
 	assert(bg_fg >= bg && bg_fg <= fg);
@@ -68,7 +68,7 @@ color256(char *str, unsigned char color, enum DrawAt bg_fg)
 }
 
 // borrowed from procps
-void
+static void
 format_uptime(char *str, size_t str_len, long uptime_secs)
 {
 	const int updecades = uptime_secs / (60L * 60 * 24 * 365 * 10);
@@ -130,7 +130,7 @@ format_uptime(char *str, size_t str_len, long uptime_secs)
 		PERROR_AND_EXIT("snprintf")
 }
 
-void
+static void
 draw_info(const Flag *flag)
 {
 	/// 1. Gathering
@@ -220,7 +220,7 @@ draw_info(const Flag *flag)
 	if (unlikely(putchar('\n') == EOF)) PERROR_AND_EXIT("putchar")
 }
 
-void
+static void
 display_help(void)
 {
 #ifdef _GNU_SOURCE
@@ -242,7 +242,7 @@ display_help(void)
 #endif
 }
 
-int comparator(const void *key, const void *flag)
+static int comparator(const void *key, const void *flag)
 {
 	return strcmp(key, ((const Flag *)flag)->name);
 }
