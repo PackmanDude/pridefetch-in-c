@@ -279,7 +279,7 @@ main(int argc, char *argv[])
 				if (!flag)
 				{
 					if (unlikely(fputs("No flag with that name was found.\n",
-						stderr) == EOF)) PERROR_AND_EXIT("fputs")
+						stderr) == EOF)) perror("fputs");
 					return EXIT_FAILURE;
 				}
 				draw_info(flag);
@@ -295,7 +295,7 @@ main(int argc, char *argv[])
 					if (!flag)
 					{
 						if (unlikely(fputs("No flag with that name was found.\n",
-							stderr) == EOF)) PERROR_AND_EXIT("fputs")
+							stderr) == EOF)) perror("fputs");
 						return EXIT_FAILURE;
 					}
 					choices[i_choice] = flag;
