@@ -57,7 +57,7 @@ static const Flag flags[] =
 	FLAG(UPA, 88, 88, 88, 0, 0, 0)
 };
 
-enum DrawAt {bg, fg};
+enum DrawAt { bg, fg };
 
 static void
 color256(char *str, unsigned char color, enum DrawAt bg_fg)
