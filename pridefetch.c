@@ -60,7 +60,7 @@ static const Flag flags[] =
 enum DrawAt { bg, fg };
 
 static void
-color256(char *str, unsigned char color, enum DrawAt bg_fg)
+color256(char * restrict str, unsigned char color, enum DrawAt bg_fg)
 {
 	assert(bg_fg >= bg && bg_fg <= fg);
 	if (unlikely(snprintf(str, COLOR_BUFFER_SIZE, "\033[%d8;5;%um",
@@ -69,7 +69,7 @@ color256(char *str, unsigned char color, enum DrawAt bg_fg)
 
 // borrowed from procps
 static void
-format_uptime(char *str, size_t str_len, long uptime_secs)
+format_uptime(char * restrict str, size_t str_len, long uptime_secs)
 {
 	const int updecades = uptime_secs / (60L * 60 * 24 * 365 * 10);
 	const int upyears = uptime_secs / (60L * 60 * 24 * 365) % 10;
@@ -131,7 +131,7 @@ format_uptime(char *str, size_t str_len, long uptime_secs)
 }
 
 static void
-draw_info(const Flag *flag)
+draw_info(const Flag * restrict flag)
 {
 	/// 1. Gathering
 	struct sysinfo sys_info;
@@ -145,7 +145,11 @@ draw_info(const Flag *flag)
 	if (unlikely(!a_pipe)) PERROR_AND_EXIT("popen")
 	char distro_name[64] = "N/A";
 	if (unlikely(!fgets(distro_name, sizeof distro_name, a_pipe) && ferror(a_pipe)))
-		PERROR_AND_EXIT("fgets")
+	{
+		perror("fgets");
+		if (unlikely(pclose(a_pipe) == -1)) perror("pclose");
+		exit(EXIT_FAILURE);
+	}
 	if (unlikely(pclose(a_pipe) == -1)) PERROR_AND_EXIT("pclose")
 
 	/// 2. Drawing
@@ -153,10 +157,12 @@ draw_info(const Flag *flag)
 	char primary[COLOR_BUFFER_SIZE];
 	color256(primary, flag->rows[0], fg);
 	char secondary[COLOR_BUFFER_SIZE];
-	size_t secondary_row = 0;
-	while (secondary_row < flag->row_count - 1
-		&& flag->rows[secondary_row] == flag->rows[0]) ++secondary_row;
-	color256(secondary, flag->rows[secondary_row], fg);
+	{
+		size_t secondary_row = 0;
+		while (secondary_row < flag->row_count - 1
+			&& flag->rows[secondary_row] == flag->rows[0]) ++secondary_row;
+		color256(secondary, flag->rows[secondary_row], fg);
+	}
 	// ensure 3:2 aspect ratio for terminal with 2x5 character size
 	const size_t width = flag->row_count * 3.75 + .5;
 
@@ -242,7 +248,7 @@ display_help(void)
 #endif
 }
 
-static int comparator(const void *key, const void *flag)
+static int comparator(const void * restrict key, const void * restrict flag)
 {
 	return strcmp(key, ((const Flag *)flag)->name);
 }
