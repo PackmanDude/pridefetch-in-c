@@ -248,7 +248,8 @@ display_help(void)
 #endif
 }
 
-static int comparator(const void * restrict key, const void * restrict flag)
+static int
+comparator(const void * restrict key, const void * restrict flag)
 {
 	return strcmp(key, ((const Flag *)flag)->name);
 }
