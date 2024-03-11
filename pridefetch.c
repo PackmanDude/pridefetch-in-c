@@ -124,10 +124,13 @@ format_uptime(char * restrict str, size_t str_len, long uptime_secs)
 		if ((unsigned)temp >= str_len - pos) return;
 		else pos += temp;
 	}
-	if (unlikely(snprintf(str + pos, str_len - pos,
-		"%s%d %s", pos ? ", " : "",
-		upminutes, upminutes != 1 ? "minutes" : "minute") < 0))
-		PERROR_AND_EXIT("snprintf")
+	if (upminutes || uptime_secs < 60 * 60)
+	{
+		if (unlikely(snprintf(str + pos, str_len - pos,
+			"%s%d %s", pos ? ", " : "",
+			upminutes, upminutes != 1 ? "minutes" : "minute") < 0))
+			PERROR_AND_EXIT("snprintf")
+	}
 }
 
 static void
