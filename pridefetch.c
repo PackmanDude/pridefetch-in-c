@@ -156,7 +156,7 @@ draw_info(const Flag * restrict flag)
 	if (unlikely(pclose(a_pipe) == -1)) PERROR_AND_EXIT("pclose")
 
 	/// 2. Drawing
-	/// 2.1 Setting variables
+	/// 2.1. Setting variables
 	char primary[COLOR_BUFFER_SIZE];
 	color256(primary, flag->rows[0], fg);
 	char secondary[COLOR_BUFFER_SIZE];
@@ -169,7 +169,7 @@ draw_info(const Flag * restrict flag)
 	// ensure 3:2 aspect ratio for terminal with 2x5 character size
 	const size_t width = flag->row_count * 3.75 + .5;
 
-	/// 2.2 Output
+	/// 2.2. Output
 	if (unlikely(putchar('\n') == EOF)) PERROR_AND_EXIT("putchar")
 	char row_info[256 + COLOR_BUFFER_SIZE - 1 + sizeof RESET - 1];
 	for (size_t current_row = 0; current_row < flag->row_count; ++current_row)
