@@ -1,5 +1,6 @@
 #define _XOPEN_SOURCE
 #include <assert.h>
+#include <errno.h>
 #ifdef _GNU_SOURCE
 # include <getopt.h>
 #endif
@@ -138,14 +139,17 @@ draw_info(const Flag * restrict flag)
 {
 	/// 1. Gathering
 	struct sysinfo sys_info;
-	if (unlikely(sysinfo(&sys_info))) PERROR_AND_EXIT("sysinfo")
+	if (unlikely(sysinfo(&sys_info) == -1)) PERROR_AND_EXIT("sysinfo")
 	const char *username = getlogin();
 	if (unlikely(!username)) PERROR_AND_EXIT("getlogin")
 	struct utsname osname;
 	if (unlikely(uname(&osname) == -1)) PERROR_AND_EXIT("uname")
-	FILE *a_pipe = popen(". /etc/os-release && [ \"$NAME\" ]"
-		" && printf %s \"$NAME\"", "r");
-	if (unlikely(!a_pipe)) PERROR_AND_EXIT("popen")
+	FILE *a_pipe = popen(". /etc/os-release && printf %s \"$NAME\"", "r");
+	if (unlikely(!a_pipe))
+	{
+		if (!errno) errno = ENOMEM;
+		PERROR_AND_EXIT("popen");
+	}
 	char distro_name[64] = "N/A";
 	if (unlikely(!fgets(distro_name, sizeof distro_name, a_pipe) && ferror(a_pipe)))
 	{
