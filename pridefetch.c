@@ -264,11 +264,6 @@ comparator(const void * restrict key, const void * restrict flag)
 int
 main(int argc, char *argv[])
 {
-	if (argc < 2)
-	{
-		display_help();
-		return EXIT_FAILURE;
-	}
 	int option;
 #ifdef _GNU_SOURCE
 	const struct option longopts[] =
@@ -340,5 +335,10 @@ main(int argc, char *argv[])
 				return EXIT_FAILURE;
 			}
 		}
+	}
+	if (optind == 1 || optind == 2 && !strcmp(argv[optind - 1], "--"))
+	{
+		display_help();
+		return EXIT_FAILURE;
 	}
 }
