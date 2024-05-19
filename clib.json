@@ -1,6 +1,6 @@
 {
   "name": "pridefetch-in-c",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "repo": "PackmanDude/pridefetch-in-c",
   "src": ["pridefetch.c"],
   "description": "Neofetch, but with flags.",

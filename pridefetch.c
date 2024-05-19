@@ -336,7 +336,7 @@ main(int argc, char *argv[])
 			}
 		}
 	}
-	if (optind == 1 || optind == 2 && !strcmp(argv[optind - 1], "--"))
+	if (optind == 1 || optind == 2 && !strcmp(argv[1], "--"))
 	{
 		display_help();
 		return EXIT_FAILURE;
