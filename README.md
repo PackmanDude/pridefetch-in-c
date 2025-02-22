@@ -1,6 +1,7 @@
 # pridefetch
 
-Neofetch clone written in Python with the ability to display pride flags.  
+Neofetch clone written in Python with the ability to display pride flags.
+
 **Edit:** This is actually, pridefetch re-written in C.
 
 ## Examples
